@@ -5,6 +5,11 @@ app.use(bodyParser.json());
 
 const VERIFY_TOKEN = 'verifica123';
 
+// ✅ Ruta raíz para comprobar actividad del servidor
+app.get('/', (req, res) => {
+  res.send('Servidor activo ✔️');
+});
+
 app.get('/webhook', (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
