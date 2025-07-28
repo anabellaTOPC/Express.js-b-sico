@@ -5,6 +5,7 @@ const app = express();
 app.use(bodyParser.json());
 
 const VERIFY_TOKEN = 'verifica123';
+const POWER_AUTOMATE_WEBHOOK_URL = 'https://prod-172.westeurope.logic.azure.com:443/workflows/8d550d3c36104fdb9857414050b9a8c2/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=d_Xb6GBRrWxUgTCLNH_1YEayLBVzbkA1ouLHY8lf_x8';
 
 // Ruta para validación (Meta Webhook GET)
 app.get('/webhook', (req, res) => {
@@ -25,16 +26,22 @@ app.post('/webhook', async (req, res) => {
   console.log("Mensaje recibido:", JSON.stringify(req.body, null, 2));
   res.sendStatus(200); // Respuesta a Meta
 
-  // REENVÍO a Power Automate (solo si tienes ya tu URL)
+  // Reenvío a Power Automate
   try {
-    await fetch('https://TU-WEBHOOK-DE-POWER-AUTOMATE', {
+    const response = await fetch(POWER_AUTOMATE_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req.body)
     });
-    console.log("➡️ Datos reenviados a Power Automate");
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error("⚠️ Power Automate respondió con error:", response.status, text);
+    } else {
+      console.log("➡️ Datos reenviados correctamente a Power Automate");
+    }
   } catch (err) {
-    console.error("Error al reenviar:", err.message);
+    console.error("❌ Error al reenviar a Power Automate:", err.message);
   }
 });
 
