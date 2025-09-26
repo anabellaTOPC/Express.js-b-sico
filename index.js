@@ -1,54 +1,36 @@
-// index.js
-// npm install express body-parser node-fetch@2
-const express = require('express');
-const bodyParser = require('body-parser');
-const fetch = require('node-fetch');
-
+const express = require("express");
+const fetch = require("node-fetch");
 const app = express();
-app.use(bodyParser.json());
 
-// ===== CONFIG =====
-const PORT = process.env.PORT || 3000;
-const IG_TOKEN = process.env.IG_TOKEN || '<IGAAXyZCcz6eItBZAFFIVENEVnhiSGtyLXdLdTQtTjlOLW9rRkV4QkJpNUJFbktyZAGlSUWVGWGNoSHBfQnlZAUk43bzBSWUZAsVG1hX0J0WWRHcXFTZA3Nkcng1SjNiT1Rhc3JLYndEaVZAzdEhMMFlwMXFWRmZALUUtYc1F2Y0lMOFZAvcwZDZD
->'; 
-const MEDIA_ID = '17957370383995377'; // <-- tu vídeo específico
+app.use(express.json());
 
-// ===== Endpoint para traer TODOS los comentarios =====
-// GET /comments
-app.get('/comments', async (req, res) => {
+const PORT = process.env.PORT || 10000;
+
+// ⚠️ Token de Instagram: debes configurarlo en Render → Environment
+const IG_TOKEN = process.env.IG_TOKEN || "<IGAAXyZCcz6eItBZAFFIVENEVnhiSGtyLXdLdTQtTjlOLW9rRkV4QkJpNUJFbktyZAGlSUWVGWGNoSHBfQnlZAUk43bzBSWUZAsVG1hX0J0WWRHcXFTZA3Nkcng1SjNiT1Rhc3JLYndEaVZAzdEhMMFlwMXFWRmZALUUtYc1F2Y0lMOFZAvcwZDZD>";
+const MEDIA_ID = "17957370383995377"; // el ID del vídeo que quieres
+
+// Endpoint de prueba
+app.get("/", (req, res) => {
+  res.send("Servidor activo 🚀");
+});
+
+// Nuevo endpoint para traer comentarios
+app.get("/comments", async (req, res) => {
   try {
-    const fields = 'id,text,username,timestamp';
-    let url = `https://graph.facebook.com/v23.0/${MEDIA_ID}/comments?fields=${encodeURIComponent(fields)}&limit=100&access_token=${IG_TOKEN}`;
-    const all = [];
+    const url = `https://graph.facebook.com/v23.0/${MEDIA_ID}/comments?fields=id,text,username&access_token=${IG_TOKEN}`;
+    const response = await fetch(url);
+    const data = await response.json();
 
-    // Paginación: recorre todas las páginas
-    while (url) {
-      const r = await fetch(url);
-      const j = await r.json();
-      if (j.error) {
-        console.error('IG API error:', j.error);
-        return res.status(400).json(j);
-      }
-      all.push(...(j.data || []));
-      url = j.paging && j.paging.next ? j.paging.next : null;
-    }
+    console.log("Comentarios:", JSON.stringify(data, null, 2));
 
-    // Filtrar solo username y text
-    const clean = all.map(c => ({
-      username: c.username,
-      text: c.text
-    }));
-
-    console.log('Comentarios encontrados:', JSON.stringify(clean, null, 2));
-    res.status(200).json(clean);
-  } catch (e) {
-    console.error('Error al traer comentarios:', e);
-    res.status(500).send('Error interno');
+    res.json(data); // lo devuelve en el navegador
+  } catch (err) {
+    console.error("Error al traer comentarios:", err);
+    res.status(500).json({ error: "No se pudieron traer comentarios" });
   }
 });
 
-// ===== Health =====
-app.get('/', (_, res) => res.send('ok'));
-
-// ===== Iniciar servidor =====
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+});
